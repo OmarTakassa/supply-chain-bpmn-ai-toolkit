@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Defs_AsIs_SupplyChain"
+             targetNamespace="http://operations.example.com/bpmn/as-is">
+  <process id="Proc_OrderToDelivery_AsIs" name="Global Supply Chain Order-to-Delivery (As-Is)" isExecutable="false">
+    <laneSet id="LaneSet_AsIs">
+      <lane id="Lane_DemandPlanning" name="Demand Planning">
+        <flowNodeRef>Start_Forecast</flowNodeRef>
+        <flowNodeRef>Task_ManualExcelForecast</flowNodeRef>
+      </lane>
+      <lane id="Lane_CoPackingProcurement" name="Procurement &amp; Co-Packing">
+        <flowNodeRef>Task_EmailSupplierRFQ</flowNodeRef>
+        <flowNodeRef>Gw_StockCheck</flowNodeRef>
+        <flowNodeRef>Task_ManualReallocation</flowNodeRef>
+      </lane>
+      <lane id="Lane_WarehouseLogistics" name="Warehouse &amp; Distribution">
+        <flowNodeRef>Task_PaperPickPack</flowNodeRef>
+        <flowNodeRef>Task_ManualCustomsDocs</flowNodeRef>
+        <flowNodeRef>End_DeliveredAsIs</flowNodeRef>
+      </lane>
+    </laneSet>
+
+    <startEvent id="Start_Forecast" name="Regional Demand Signal Received"/>
+    <userTask id="Task_ManualExcelForecast" name="Consolidate Regional Excel Forecasts (Manual Email)"
+              implementation="Manual Spreadsheet | Avg Cycle: 14.0h | Error Rate: 8.5%"/>
+    <userTask id="Task_EmailSupplierRFQ" name="Issue Co-Packing &amp; Packaging POs via Email"
+              implementation="Email + Legacy ERP | Avg Cycle: 18.0h | Error Rate: 6.2%"/>
+    <exclusiveGateway id="Gw_StockCheck" name="Buffer Stock Available?"/>
+    <userTask id="Task_ManualReallocation" name="Escalate &amp; Reallocate Cross-Plant Inventory"
+              implementation="Phone/Email Escalation | Avg Cycle: 12.0h | Error Rate: 9.0%"/>
+    <userTask id="Task_PaperPickPack" name="Manual Warehouse Pick, Pack &amp; Batch Scan"
+              implementation="Paper Pick List | Avg Cycle: 9.5h | Error Rate: 4.8%"/>
+    <userTask id="Task_ManualCustomsDocs" name="Prepare Export &amp; Cold-Chain Manifests Manually"
+              implementation="Manual PDF/Excel | Avg Cycle: 8.5h | Error Rate: 5.5%"/>
+    <endEvent id="End_DeliveredAsIs" name="Shipment Dispatched (Avg 62.0h Lead Time)"/>
+
+    <sequenceFlow id="Flow_1" sourceRef="Start_Forecast" targetRef="Task_ManualExcelForecast"/>
+    <sequenceFlow id="Flow_2" sourceRef="Task_ManualExcelForecast" targetRef="Task_EmailSupplierRFQ"/>
+    <sequenceFlow id="Flow_3" sourceRef="Task_EmailSupplierRFQ" targetRef="Gw_StockCheck"/>
+    <sequenceFlow id="Flow_4" name="No" sourceRef="Gw_StockCheck" targetRef="Task_ManualReallocation"/>
+    <sequenceFlow id="Flow_5" name="Yes" sourceRef="Gw_StockCheck" targetRef="Task_PaperPickPack"/>
+    <sequenceFlow id="Flow_6" sourceRef="Task_ManualReallocation" targetRef="Task_PaperPickPack"/>
+    <sequenceFlow id="Flow_7" sourceRef="Task_PaperPickPack" targetRef="Task_ManualCustomsDocs"/>
+    <sequenceFlow id="Flow_8" sourceRef="Task_ManualCustomsDocs" targetRef="End_DeliveredAsIs"/>
+  </process>
+</definitions>

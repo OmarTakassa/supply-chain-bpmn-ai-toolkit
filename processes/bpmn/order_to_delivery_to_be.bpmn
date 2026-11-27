@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Defs_ToBe_SupplyChain"
+             targetNamespace="http://operations.example.com/bpmn/to-be">
+  <process id="Proc_OrderToDelivery_ToBe" name="Global Supply Chain Order-to-Delivery (To-Be Automated)" isExecutable="true">
+    <laneSet id="LaneSet_ToBe">
+      <lane id="Lane_DemandPlanning_ToBe" name="Demand Planning">
+        <flowNodeRef>Start_ERPStream</flowNodeRef>
+        <flowNodeRef>Task_AutoDemandSync</flowNodeRef>
+      </lane>
+      <lane id="Lane_CoPackingProcurement_ToBe" name="Procurement &amp; Co-Packing">
+        <flowNodeRef>Task_AutoERPOrder</flowNodeRef>
+        <flowNodeRef>Gw_AutoATP</flowNodeRef>
+        <flowNodeRef>Task_AIExceptionRouting</flowNodeRef>
+      </lane>
+      <lane id="Lane_WarehouseLogistics_ToBe" name="Warehouse &amp; Distribution">
+        <flowNodeRef>Task_WMSPickScan</flowNodeRef>
+        <flowNodeRef>Task_AutoDigitalManifest</flowNodeRef>
+        <flowNodeRef>End_DeliveredToBe</flowNodeRef>
+      </lane>
+    </laneSet>
+
+    <startEvent id="Start_ERPStream" name="Automated POS &amp; ERP Demand Feed"/>
+    <serviceTask id="Task_AutoDemandSync" name="Automated Multi-Region Forecast Aggregation &amp; DQ Check"
+                 implementation="ERP API + DQ Rules | Avg Cycle: 1.5h | Error Rate: 0.4%"/>
+    <serviceTask id="Task_AutoERPOrder" name="EDI / Portal Co-Packing Schedule Release"
+                 implementation="EDI Integration | Avg Cycle: 3.0h | Error Rate: 0.6%"/>
+    <exclusiveGateway id="Gw_AutoATP" name="Real-Time ATP Confirmed?"/>
+    <serviceTask id="Task_AIExceptionRouting" name="AI-Assisted Cross-Plant Rebalancing Recommendation"
+                 implementation="AI Triage + Planner Approve | Avg Cycle: 2.5h | Error Rate: 1.1%"/>
+    <userTask id="Task_WMSPickScan" name="RF Scanner Guided WMS Pick &amp; Batch Traceability"
+              implementation="WMS Mobile App | Avg Cycle: 4.0h | Error Rate: 0.5%"/>
+    <serviceTask id="Task_AutoDigitalManifest" name="Auto-Generate Digital Customs &amp; Cold-Chain Pack"
+                 implementation="ERP Document Engine | Avg Cycle: 1.0h | Error Rate: 0.2%"/>
+    <endEvent id="End_DeliveredToBe" name="Shipment Dispatched (Avg 12.0h Lead Time)"/>
+
+    <sequenceFlow id="TFlow_1" sourceRef="Start_ERPStream" targetRef="Task_AutoDemandSync"/>
+    <sequenceFlow id="TFlow_2" sourceRef="Task_AutoDemandSync" targetRef="Task_AutoERPOrder"/>
+    <sequenceFlow id="TFlow_3" sourceRef="Task_AutoERPOrder" targetRef="Gw_AutoATP"/>
+    <sequenceFlow id="TFlow_4" name="No" sourceRef="Gw_AutoATP" targetRef="Task_AIExceptionRouting"/>
+    <sequenceFlow id="TFlow_5" name="Yes" sourceRef="Gw_AutoATP" targetRef="Task_WMSPickScan"/>
+    <sequenceFlow id="TFlow_6" sourceRef="Task_AIExceptionRouting" targetRef="Task_WMSPickScan"/>
+    <sequenceFlow id="TFlow_7" sourceRef="Task_WMSPickScan" targetRef="Task_AutoDigitalManifest"/>
+    <sequenceFlow id="TFlow_8" sourceRef="Task_AutoDigitalManifest" targetRef="End_DeliveredToBe"/>
+  </process>
+</definitions>
